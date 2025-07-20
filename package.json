@@ -1,4 +1,10 @@
 {
+  "homepage": "https://bware218.github.io/tic-tac-toe-ten",
+  "scripts": {
+    // Keep existing scripts
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
   "name": "tic-tac-toe-ten",
   "version": "0.1.0",
   "private": true,
@@ -40,11 +46,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }, 
-  "homepage": "https://bware218.github.io/tic-tac-toe-ten",
-  "scripts": {
-    // Keep existing scripts
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
   }
 }
