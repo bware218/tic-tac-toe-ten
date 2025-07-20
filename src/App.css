@@ -1,38 +1,383 @@
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-background);
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background-color: var(--color-primary);
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: calc(10px + 1vmin);
   color: white;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: var(--z-index-above);
 }
 
-.App-link {
-  color: #61dafb;
+.App-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
 }
 
-@keyframes App-logo-spin {
+.App-logo {
+  height: 60px;
+  width: auto;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.App-title-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: calc(20px + 2vmin);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.App-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--spacing-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Game board container */
+.App-game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: var(--spacing-xl);
+  animation: pageTransition 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+/* Setup screen */
+.App-setup {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+  margin: var(--spacing-lg) auto;
+  animation: pageTransition 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.App-setup-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Error message */
+.App-error-message {
+  background-color: var(--color-error);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-md);
+  margin: var(--spacing-md) 0;
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  animation: slideInEnhanced 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 80%;
+  z-index: var(--z-index-above);
+  transform-origin: center top;
+}
+
+/* Error actions */
+.App-error-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  justify-content: center;
+}
+
+.App-error-actions button {
+  background-color: white;
+  color: var(--color-error);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.App-error-actions button:hover {
+  background-color: var(--color-background-light);
+}
+
+/* Error state fallback */
+.App-error-state {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-md) 0;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  animation: slideInEnhanced 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.App-error-state::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right, var(--color-error), var(--color-error-dark));
+  animation: drawLineEnhanced 0.8s ease-out forwards;
+}
+
+.App-error-state h2 {
+  color: var(--color-error);
+  margin-top: 0;
+}
+
+.App-error-state .App-error-actions {
+  margin-top: var(--spacing-md);
+}
+
+.App-error-state .App-error-actions button {
+  background-color: var(--color-primary);
+  color: white;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+}
+
+/* Loading indicator */
+.App-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.App-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  border-left-color: var(--color-primary-light);
+  animation: enhancedSpin 1.2s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+  margin-bottom: var(--spacing-sm);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes enhancedSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+  }
+}
+
+/* Game container */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  gap: var(--spacing-lg);
+}
+
+/* Game section */
+.game-section {
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.game-section-title {
+  font-size: var(--font-size-lg);
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Footer */
+.App-footer {
+  background-color: var(--color-primary-dark);
+  color: white;
+  padding: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.App-footer p {
+  margin: 0;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .App-main {
+    padding: var(--spacing-lg);
+  }
+  
+  .game-container {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .App-main {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+  
+  .game-section {
+    padding: var(--spacing-md);
+  }
+  
+  .game-container {
+    max-width: 100%;
+  }
+  
+  .App-header {
+    padding: var(--spacing-sm);
+  }
+  
+  .App-setup {
+    max-width: 100%;
+  }
+  
+  .App-error-message {
+    max-width: 90%;
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .App-header h1 {
+    font-size: calc(16px + 2vmin);
+  }
+  
+  .App-main {
+    padding: var(--spacing-sm) var(--spacing-xs);
+  }
+  
+  .game-section {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+  }
+  
+  .App-game {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .App-setup-options {
+    gap: var(--spacing-md);
+  }
+  
+  .App-error-message {
+    max-width: 100%;
+    margin: var(--spacing-sm) 0;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .App-loading-spinner {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* Orientation-specific styles */
+@media (max-width: 768px) and (orientation: landscape) {
+  .App-main {
+    padding: var(--spacing-xs);
+  }
+  
+  .App-header {
+    padding: var(--spacing-xs);
+  }
+  
+  .App-header h1 {
+    font-size: calc(14px + 1vmin);
+  }
+  
+  /* Optimize layout for landscape orientation */
+  .App-game {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  
+  .master-grid {
+    flex: 0 0 60%;
+    margin-right: var(--spacing-sm);
+  }
+  
+  .game-controls, 
+  .game-status {
+    flex: 0 0 35%;
+    margin-top: 0;
+  }
+  
+  /* Setup screen in landscape */
+  .App-setup {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    max-width: 100%;
+  }
+  
+  .App-setup-options {
+    flex: 0 0 60%;
+  }
+  
+  .App-setup .game-controls {
+    flex: 0 0 35%;
+    align-self: flex-start;
+  }
+  
+  .App-error-message {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-index-above);
   }
 }

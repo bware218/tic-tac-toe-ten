@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4da6ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0080ff;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="3" dy="3" stdDeviation="5" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background rounded square -->
+  <rect x="10" y="10" width="492" height="492" rx="80" ry="80" fill="url(#bgGradient)" />
+  
+  <!-- White circle background -->
+  <circle cx="256" cy="256" r="200" fill="#ffffff" filter="url(#shadow)" />
+  
+  <!-- T letter -->
+  <path d="M150 140 L250 140 L250 170 L220 170 L220 350 L180 350 L180 170 L150 170 Z" fill="#f0d264" filter="url(#shadow)" />
+  
+  <!-- 1 digit -->
+  <path d="M270 200 L290 180 L290 350 L270 350 Z" fill="#8bc34a" filter="url(#shadow)" />
+  
+  <!-- 0 digit -->
+  <path d="M340 180 C370 180 390 210 390 260 C390 310 370 350 340 350 C310 350 290 310 290 260 C290 210 310 180 340 180 Z M340 210 C325 210 320 230 320 260 C320 290 325 320 340 320 C355 320 360 290 360 260 C360 230 355 210 340 210 Z" fill="#2196f3" filter="url(#shadow)" />
+  
+  <!-- Red accent at top -->
+  <path d="M200 100 L230 100 L230 130 L200 130 Z" fill="#e57373" filter="url(#shadow)" />
+  
+  <!-- Red accent at bottom -->
+  <path d="M180 370 L320 370 L320 390 L180 390 Z" fill="#e57373" filter="url(#shadow)" />
+</svg>
