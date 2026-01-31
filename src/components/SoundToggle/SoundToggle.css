@@ -1,0 +1,33 @@
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  min-height: 32px;
+}
+
+.sound-toggle:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.sound-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.sound-toggle__icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sound-toggle__label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}

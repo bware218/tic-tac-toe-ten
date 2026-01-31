@@ -13,10 +13,17 @@ import GameModeSelector from './components/GameModeSelector/GameModeSelector';
 import PlayerModeSelector from './components/PlayerModeSelector/PlayerModeSelector';
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import BusinessBabies from './components/BusinessBabies/BusinessBabies';
+import SetupBabies from './components/SetupBabies/SetupBabies';
+import HowToPlay from './components/HowToPlay/HowToPlay';
+import ThemeToggle from './components/ThemeToggle/ThemeToggle';
+import SoundToggle from './components/SoundToggle/SoundToggle';
 import { GamePhase, PlayerMode } from './types';
 import { shouldBlockPlayerInput, isCellPlayable } from './utils/gameFlowManager';
 import { validateMove, validateGameState, handleGameError } from './utils/gameUtils';
 import { announceToScreenReader } from './utils/keyboardNavigation';
+import { playPlace, playStart, playWin, playError } from './utils/soundManager';
+import { recordGameResult } from './utils/statsManager';
+import PlayerStatsDisplay from './components/PlayerStatsDisplay/PlayerStatsDisplay';
 import { useDebounce, useThrottle } from './utils/performanceUtils';
 import { applyBrowserFixes, logBrowserInfo } from './utils/browserCompatibility';
 import { startPerformanceMonitoring, getPerformanceMetrics } from './utils/performanceMonitor';
@@ -151,15 +158,17 @@ const AppContent = React.memo(() => {
       if (validationError) {
         setErrorMessage(validationError);
         announceToScreenReader(validationError, "assertive");
+        playError();
         return;
       }
-      
+
       // Make the move
       dispatch({
         type: 'MAKE_MOVE',
         payload: { cellIndex, player: gameState.currentPlayer }
       });
-      
+      playPlace();
+
       // Announce the move to screen readers
       announceToScreenReader(`Player ${gameState.currentPlayer} placed at cell ${cellIndex % 9 + 1}`, "polite");
     } catch (error) {
@@ -197,16 +206,21 @@ const AppContent = React.memo(() => {
   
   // Handle game phase transitions
   useEffect(() => {
-    // When transitioning to playing phase, show brief loading state
     if (gameState.gamePhase === GamePhase.PLAYING) {
+      playStart();
       setIsLoading(true);
       const timer = setTimeout(() => {
         setIsLoading(false);
       }, 500);
-      
       return () => clearTimeout(timer);
     }
-  }, [gameState.gamePhase]);
+    if (gameState.gamePhase === GamePhase.FINISHED) {
+      if (gameState.gameWinner) {
+        playWin();
+      }
+      recordGameResult(gameState.gameWinner as 'X' | 'O' | null);
+    }
+  }, [gameState.gamePhase, gameState.gameWinner]);
   
   // Handle game reset
   const handleResetGame = useCallback(() => {
@@ -256,8 +270,42 @@ const AppContent = React.memo(() => {
     }
   }, []);
 
+  // Generate a stable set of background symbols
+  const bgSymbols = React.useMemo(() => {
+    const symbols: { char: string; left: number; delay: number; duration: number; size: number }[] = [];
+    for (let i = 0; i < 18; i++) {
+      symbols.push({
+        char: i % 2 === 0 ? 'X' : 'O',
+        left: (i * 5.8 + 2) % 100,
+        delay: i * 1.7,
+        duration: 20 + (i % 5) * 4,
+        size: 24 + (i % 4) * 8,
+      });
+    }
+    return symbols;
+  }, []);
+
   return (
     <div className="App">
+      {/* Animated floating background */}
+      <div className="App-bg" aria-hidden="true">
+        {bgSymbols.map((s, i) => (
+          <span
+            key={i}
+            className="App-bg__symbol"
+            style={{
+              left: `${s.left}%`,
+              fontSize: `${s.size}px`,
+              animationDelay: `${s.delay}s`,
+              animationDuration: `${s.duration}s`,
+              color: s.char === 'X' ? 'var(--color-x)' : 'var(--color-o)',
+            }}
+          >
+            {s.char}
+          </span>
+        ))}
+      </div>
+
       {/* Skip links for keyboard navigation */}
       <a href="#main" className="skip-link" onClick={(e) => {
         e.preventDefault();
@@ -279,9 +327,13 @@ const AppContent = React.memo(() => {
         <div className="App-logo-container">
           <img src={require('./assets/images/logo.svg').default} alt="Tic Tac Toe Ten Logo" className="App-logo" />
           <div className="App-title-container">
-            <h1>Tic Tac Toe Ten</h1>
-            <p>A strategic game on the Smart Grid platform</p>
+            <h1>Tic Tac Toe <span className="App-title-ten">Ten</span></h1>
+            <p className="App-subtitle">A strategic game on the Smart Grid platform</p>
           </div>
+        </div>
+        <div className="App-header-controls">
+          <ThemeToggle />
+          <SoundToggle />
         </div>
       </header>
       
@@ -313,6 +365,9 @@ const AppContent = React.memo(() => {
         {/* Setup screen */}
         {showSetup && !isLoading && (
           <div className="App-setup" role="region" aria-label="Game setup options">
+            <SetupBabies />
+            <PlayerStatsDisplay />
+            <HowToPlay />
             <div className="App-setup-options">
               <GameModeSelector />
               <PlayerModeSelector />

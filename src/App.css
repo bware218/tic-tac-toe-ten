@@ -4,20 +4,60 @@
   flex-direction: column;
   min-height: 100vh;
   background-color: var(--color-background);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated floating X/O background */
+.App-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  opacity: 0.04;
+}
+
+.App-bg__symbol {
+  position: absolute;
+  font-size: 32px;
+  font-weight: 800;
+  animation: bgFloat linear infinite;
+  will-change: transform;
+}
+
+@keyframes bgFloat {
+  0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .App-bg { display: none; }
+}
+
+/* Ensure content sits above the background */
+.App-header,
+.App-main,
+.App-footer {
+  position: relative;
+  z-index: 1;
 }
 
 .App-header {
-  background-color: var(--color-primary);
-  padding: var(--spacing-md);
+  background: linear-gradient(135deg, #0077cc 0%, #0984e3 50%, #00a8ff 100%);
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 1vmin);
   color: white;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   position: relative;
   z-index: var(--z-index-above);
+  gap: var(--spacing-xs);
 }
 
 .App-logo-container {
@@ -30,7 +70,13 @@
 .App-logo {
   height: 60px;
   width: auto;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 .App-title-container {
@@ -44,6 +90,34 @@
   font-size: calc(20px + 2vmin);
   font-weight: 700;
   letter-spacing: 0.5px;
+}
+
+.App-title-ten {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--color-x) 0%, var(--color-secondary) 50%, var(--color-o) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: titleGradient 4s linear infinite;
+  font-weight: 800;
+}
+
+@keyframes titleGradient {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+.App-header-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.App-subtitle {
+  margin: 0;
+  opacity: 0.85;
+  font-size: var(--font-size-sm);
 }
 
 .App-main {
@@ -380,4 +454,10 @@
     transform: translateX(-50%);
     z-index: var(--z-index-above);
   }
+}
+
+/* Reduced motion: disable decorative animations */
+@media (prefers-reduced-motion: reduce) {
+  .App-logo { animation: none; }
+  .App-title-ten { animation: none; -webkit-text-fill-color: #e8b828; }
 }

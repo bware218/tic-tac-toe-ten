@@ -53,7 +53,7 @@ const GameModeSelector: React.FC = () => {
         role="radiogroup"
         aria-label="Select game mode"
       >
-        <div 
+        <div
           className={`game-mode-selector__option ${mode === GameMode.BASIC ? 'game-mode-selector__option--selected' : ''}`}
           onClick={() => handleModeSelect(GameMode.BASIC)}
           onKeyDown={(e) => handleKeyDown(e, GameMode.BASIC)}
@@ -63,6 +63,21 @@ const GameModeSelector: React.FC = () => {
           aria-checked={mode === GameMode.BASIC}
           aria-disabled={isDisabled}
         >
+          {/* Visual preview: single mini-grid with a winning row highlighted */}
+          <div className="game-mode-selector__preview" aria-hidden="true">
+            <div className="mode-preview mode-preview--basic">
+              <div className="mode-preview__cell mode-preview__cell--x mode-preview__cell--win">X</div>
+              <div className="mode-preview__cell mode-preview__cell--x mode-preview__cell--win">X</div>
+              <div className="mode-preview__cell mode-preview__cell--x mode-preview__cell--win">X</div>
+              <div className="mode-preview__cell">O</div>
+              <div className="mode-preview__cell mode-preview__cell--o">O</div>
+              <div className="mode-preview__cell"></div>
+              <div className="mode-preview__cell"></div>
+              <div className="mode-preview__cell"></div>
+              <div className="mode-preview__cell mode-preview__cell--o">O</div>
+            </div>
+            <div className="mode-preview__label">Win here!</div>
+          </div>
           <div className="game-mode-selector__option-title">
             Basic
             {mode === GameMode.BASIC && (
@@ -74,7 +89,7 @@ const GameModeSelector: React.FC = () => {
           </div>
         </div>
 
-        <div 
+        <div
           className={`game-mode-selector__option ${mode === GameMode.EXTENDED ? 'game-mode-selector__option--selected' : ''}`}
           onClick={() => handleModeSelect(GameMode.EXTENDED)}
           onKeyDown={(e) => handleKeyDown(e, GameMode.EXTENDED)}
@@ -84,6 +99,21 @@ const GameModeSelector: React.FC = () => {
           aria-checked={mode === GameMode.EXTENDED}
           aria-disabled={isDisabled}
         >
+          {/* Visual preview: master grid showing three won grids in a row */}
+          <div className="game-mode-selector__preview" aria-hidden="true">
+            <div className="mode-preview mode-preview--extended">
+              <div className="mode-preview__grid mode-preview__grid--won-x">X</div>
+              <div className="mode-preview__grid mode-preview__grid--won-x">X</div>
+              <div className="mode-preview__grid mode-preview__grid--won-x">X</div>
+              <div className="mode-preview__grid mode-preview__grid--won-o">O</div>
+              <div className="mode-preview__grid"></div>
+              <div className="mode-preview__grid"></div>
+              <div className="mode-preview__grid"></div>
+              <div className="mode-preview__grid mode-preview__grid--won-o">O</div>
+              <div className="mode-preview__grid"></div>
+            </div>
+            <div className="mode-preview__label">Win 3 grids in a row!</div>
+          </div>
           <div className="game-mode-selector__option-title">
             Extended
             {mode === GameMode.EXTENDED && (

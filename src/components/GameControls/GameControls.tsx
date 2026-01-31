@@ -1,46 +1,66 @@
-import React, { KeyboardEvent } from 'react';
+import React, { KeyboardEvent, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
-import { GamePhase } from '../../types';
+import { GamePhase, GameMode, PlayerMode, CPUDifficulty } from '../../types';
 import './GameControls.css';
 
-/**
- * GameControls component provides buttons for game control actions:
- * - New Game: Resets the game to initial state with mode selection
- * - Reset Game: Resets the current game while keeping settings
- * - Game Mode: Shows current mode and allows switching when game is finished
- */
+const LAST_SETTINGS_KEY = 'ttt10-last-settings';
+
+interface SavedSettings {
+  mode: GameMode;
+  playerMode: PlayerMode;
+  cpuDifficulty: CPUDifficulty;
+}
+
+function getSavedSettings(): SavedSettings | null {
+  try {
+    const raw = sessionStorage.getItem(LAST_SETTINGS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SavedSettings;
+  } catch {
+    return null;
+  }
+}
+
+function saveSettings(settings: SavedSettings) {
+  sessionStorage.setItem(LAST_SETTINGS_KEY, JSON.stringify(settings));
+}
+
 const GameControls: React.FC = () => {
   const { gameState, dispatch } = useGame();
-  const { gamePhase, mode } = gameState;
+  const { gamePhase, mode, playerMode, cpuDifficulty } = gameState;
 
-  /**
-   * Handles starting a new game (resets everything including settings)
-   */
+  // Save settings whenever a game starts
+  useEffect(() => {
+    if (gamePhase === GamePhase.PLAYING) {
+      saveSettings({ mode, playerMode, cpuDifficulty });
+    }
+  }, [gamePhase, mode, playerMode, cpuDifficulty]);
+
   const handleNewGame = () => {
     dispatch({ type: 'NEW_GAME' });
   };
 
-  /**
-   * Handles resetting the current game (keeps current settings)
-   */
   const handleResetGame = () => {
     dispatch({ type: 'RESET_GAME' });
   };
 
-  /**
-   * Handles starting the game after setup
-   */
   const handleStartGame = () => {
     if (gamePhase === GamePhase.SETUP) {
       dispatch({ type: 'START_GAME' });
     }
   };
 
-  /**
-   * Handles keyboard events for accessibility
-   * @param event - Keyboard event
-   * @param callback - Function to call on key press
-   */
+  const handleQuickPlay = () => {
+    const saved = getSavedSettings();
+    if (!saved || gamePhase !== GamePhase.SETUP) return;
+    dispatch({ type: 'SET_GAME_MODE', payload: saved.mode });
+    dispatch({ type: 'SET_PLAYER_MODE', payload: saved.playerMode });
+    dispatch({ type: 'SET_CPU_DIFFICULTY', payload: saved.cpuDifficulty });
+    dispatch({ type: 'START_GAME' });
+  };
+
+  const savedSettings = getSavedSettings();
+
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, callback: () => void) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -48,26 +68,50 @@ const GameControls: React.FC = () => {
     }
   };
 
+  const formatQuickPlayLabel = (s: SavedSettings): string => {
+    const modeLabel = s.mode === GameMode.BASIC ? 'Basic' : 'Extended';
+    if (s.playerMode === PlayerMode.HUMAN_VS_HUMAN) {
+      return `${modeLabel}, vs Human`;
+    }
+    const diffLabel = s.cpuDifficulty.charAt(0).toUpperCase() + s.cpuDifficulty.slice(1);
+    return `${modeLabel}, vs CPU (${diffLabel})`;
+  };
+
   return (
-    <div 
+    <div
       className="game-controls"
       role="group"
       aria-label="Game controls"
     >
       <div className="game-controls__buttons">
         {gamePhase === GamePhase.SETUP && (
-          <button 
-            className="game-controls__button game-controls__button--primary"
-            onClick={handleStartGame}
-            onKeyDown={(e) => handleKeyDown(e, handleStartGame)}
-            aria-label="Start game with current settings"
-          >
-            Start Game
-          </button>
+          <>
+            <button
+              className="game-controls__button game-controls__button--primary"
+              onClick={handleStartGame}
+              onKeyDown={(e) => handleKeyDown(e, handleStartGame)}
+              aria-label="Start game with current settings"
+            >
+              Start Game
+            </button>
+            {savedSettings && (
+              <button
+                className="game-controls__button game-controls__button--quick"
+                onClick={handleQuickPlay}
+                onKeyDown={(e) => handleKeyDown(e, handleQuickPlay)}
+                aria-label={`Quick play with last settings: ${formatQuickPlayLabel(savedSettings)}`}
+              >
+                Quick Play
+                <span className="game-controls__quick-label">
+                  {formatQuickPlayLabel(savedSettings)}
+                </span>
+              </button>
+            )}
+          </>
         )}
 
         {gamePhase === GamePhase.PLAYING && (
-          <button 
+          <button
             className="game-controls__button game-controls__button--secondary"
             onClick={handleResetGame}
             onKeyDown={(e) => handleKeyDown(e, handleResetGame)}
@@ -79,7 +123,7 @@ const GameControls: React.FC = () => {
 
         {gamePhase === GamePhase.FINISHED && (
           <>
-            <button 
+            <button
               className="game-controls__button game-controls__button--primary"
               onClick={handleResetGame}
               onKeyDown={(e) => handleKeyDown(e, handleResetGame)}
@@ -87,7 +131,7 @@ const GameControls: React.FC = () => {
             >
               Play Again
             </button>
-            <button 
+            <button
               className="game-controls__button game-controls__button--secondary"
               onClick={handleNewGame}
               onKeyDown={(e) => handleKeyDown(e, handleNewGame)}
@@ -99,20 +143,19 @@ const GameControls: React.FC = () => {
         )}
       </div>
 
-      {/* Game status information */}
-      <div 
+      <div
         className="game-controls__info"
         aria-live="polite"
       >
         {gamePhase === GamePhase.PLAYING && (
           <div className="game-controls__status">
-            <span 
+            <span
               className="game-controls__status-label"
               id="game-status-label"
             >
               Game in progress
             </span>
-            <button 
+            <button
               className="game-controls__button game-controls__button--text"
               onClick={handleNewGame}
               onKeyDown={(e) => handleKeyDown(e, handleNewGame)}
@@ -128,7 +171,4 @@ const GameControls: React.FC = () => {
   );
 };
 
-// Since GameControls uses context directly, React.memo won't help much
-// as it will re-render whenever the context changes
-// But we'll add it anyway for consistency and in case the component is used differently in the future
 export default React.memo(GameControls);
