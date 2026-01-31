@@ -14,7 +14,7 @@ const STEPS = [
   },
   {
     title: 'The Constraint',
-    text: 'The cell you pick determines which mini-grid your opponent must play in next. Pick cell 5? They play in grid 5.',
+    text: 'Your cell position determines where your opponent plays next. Here, X plays in the bottom-center cell of grid 5 — so O must play somewhere in grid 8 (bottom-center grid).',
     visual: 'constraint',
   },
   {
@@ -119,25 +119,37 @@ const MoveVisual: React.FC = () => (
 );
 
 const ConstraintVisual: React.FC = () => (
-  <div className="htp-visual htp-visual--board">
-    {Array.from({ length: 9 }).map((_, gi) => (
-      <div key={gi} className={`htp-mini-grid ${gi === 7 ? 'htp-mini-grid--constrained' : ''}`}>
-        {Array.from({ length: 9 }).map((_, ci) => {
-          // Show X's move in grid 4, cell 7 (bottom-center) -> forces opponent to grid 7
-          const isXMove = gi === 4 && ci === 7;
-          // Show arrow indicator for grid 7
-          const isTarget = gi === 7 && ci === 4;
-          return (
-            <div
-              key={ci}
-              className={`htp-cell ${isXMove ? 'htp-cell--x' : ''} ${isTarget ? 'htp-cell--target' : ''}`}
-            >
-              {isXMove ? 'X' : isTarget ? '?' : ''}
-            </div>
-          );
-        })}
-      </div>
-    ))}
+  <div className="htp-visual htp-constraint-wrapper">
+    <div className="htp-visual--board">
+      {Array.from({ length: 9 }).map((_, gi) => (
+        <div key={gi} className={`htp-mini-grid ${gi === 4 ? 'htp-mini-grid--highlight' : ''} ${gi === 7 ? 'htp-mini-grid--constrained' : ''}`}>
+          {/* Grid number label */}
+          <span className={`htp-grid-label ${gi === 4 || gi === 7 ? 'htp-grid-label--active' : ''}`}>
+            {gi + 1}
+          </span>
+          {Array.from({ length: 9 }).map((_, ci) => {
+            // X plays in grid 5 (index 4), cell 8 (index 7, bottom-center)
+            const isXMove = gi === 4 && ci === 7;
+            // Target indicator in grid 8 (index 7)
+            const isTarget = gi === 7 && ci === 4;
+            return (
+              <div
+                key={ci}
+                className={`htp-cell ${isXMove ? 'htp-cell--x htp-cell--pulse' : ''} ${isTarget ? 'htp-cell--target' : ''}`}
+              >
+                {isXMove ? 'X' : isTarget ? 'O?' : ''}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+    {/* Arrow connecting the cell to the target grid */}
+    <div className="htp-constraint-arrow" aria-hidden="true">
+      <span className="htp-constraint-arrow__label">Cell 8 in grid 5</span>
+      <span className="htp-constraint-arrow__icon">&darr;</span>
+      <span className="htp-constraint-arrow__label">O must play in grid 8</span>
+    </div>
   </div>
 );
 

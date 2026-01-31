@@ -136,18 +136,17 @@
 /* --- Visual diagrams --- */
 
 .htp-visual {
-  margin: 0 auto var(--spacing-xs);
+  margin: 0 auto var(--spacing-sm);
 }
 
 .htp-visual--board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 3px;
-  width: 150px;
-  height: 150px;
+  gap: 4px;
+  width: 300px;
   background: var(--color-text-secondary);
-  border-radius: 4px;
-  padding: 3px;
+  border-radius: 6px;
+  padding: 4px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -157,22 +156,25 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
   background: var(--color-border);
-  border-radius: 2px;
+  border-radius: 3px;
   padding: 1px;
+  position: relative;
 }
 
 .htp-mini-grid--highlight {
   box-shadow: 0 0 0 2px var(--color-primary);
+  z-index: 1;
 }
 
 .htp-mini-grid--constrained {
   box-shadow: 0 0 0 2px var(--color-secondary-dark);
   animation: constraintBlink 1.5s infinite;
+  z-index: 1;
 }
 
 @keyframes constraintBlink {
   0%, 100% { box-shadow: 0 0 0 2px var(--color-secondary-dark); }
-  50% { box-shadow: 0 0 0 2px var(--color-secondary-dark), 0 0 6px var(--color-secondary); }
+  50% { box-shadow: 0 0 0 2px var(--color-secondary-dark), 0 0 8px var(--color-secondary); }
 }
 
 .htp-mini-grid--won {
@@ -180,27 +182,54 @@
   box-shadow: 0 0 0 2px var(--color-x);
 }
 
+/* Grid number labels */
+.htp-grid-label {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  opacity: 0.4;
+  z-index: 2;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.htp-grid-label--active {
+  opacity: 1;
+  font-size: 9px;
+  font-weight: 800;
+}
+
 .htp-cell {
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-surface);
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--color-text-secondary);
+  min-width: 10px;
+  min-height: 10px;
   aspect-ratio: 1;
 }
 
-.htp-cell--x { color: var(--color-x); font-size: 9px; }
+.htp-cell--x {
+  color: var(--color-x);
+  font-size: 13px;
+}
+
 .htp-cell--target {
-  color: var(--color-secondary-dark);
-  font-size: 9px;
+  color: var(--color-o);
+  font-size: 11px;
+  background: var(--color-o-light);
   animation: targetPulse 1s infinite;
 }
 
 @keyframes targetPulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.3); }
+  50% { transform: scale(1.15); }
 }
 
 .htp-cell--pulse {
@@ -214,20 +243,58 @@
 
 .htp-cell--won {
   color: var(--color-x);
-  font-size: 8px;
+  font-size: 11px;
   background: var(--color-x-light);
+}
+
+/* Constraint step: arrow explanation below the board */
+.htp-constraint-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.htp-constraint-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.htp-constraint-arrow__icon {
+  font-size: 18px;
+  color: var(--color-secondary-dark);
+  line-height: 1;
+}
+
+.htp-constraint-arrow__label {
+  font-size: 11px;
 }
 
 /* Responsive */
 @media (max-width: 480px) {
   .htp-visual--board {
-    width: 120px;
-    height: 120px;
+    width: 240px;
   }
 
   .how-to-play__content {
     padding: var(--spacing-sm);
   }
+
+  .htp-cell {
+    font-size: 8px;
+    min-width: 8px;
+    min-height: 8px;
+  }
+
+  .htp-cell--x { font-size: 10px; }
+  .htp-cell--target { font-size: 9px; }
+  .htp-cell--won { font-size: 9px; }
+  .htp-grid-label { font-size: 7px; }
 }
 
 /* Reduced motion */
