@@ -15,7 +15,8 @@ export const createInitialGameState = (): GameState => ({
   smallGridWinners: new Array(9).fill(null),
   gameWinner: null,
   winningCells: [],
-  cpuDifficulty: CPUDifficulty.MEDIUM
+  cpuDifficulty: CPUDifficulty.MEDIUM,
+  cpuDifficultyX: CPUDifficulty.MEDIUM
 });
 
 // Reset game state while preserving settings
@@ -96,6 +97,13 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...state,
         cpuDifficulty: action.payload
+      };
+    }
+
+    case 'SET_CPU_DIFFICULTY_X': {
+      return {
+        ...state,
+        cpuDifficultyX: action.payload
       };
     }
     

@@ -28,6 +28,13 @@ import { useDebounce, useThrottle } from './utils/performanceUtils';
 import { applyBrowserFixes, logBrowserInfo } from './utils/browserCompatibility';
 import { startPerformanceMonitoring, getPerformanceMetrics } from './utils/performanceMonitor';
 
+const SPEED_OPTIONS = [
+  { label: 'Slow', ms: 1500 },
+  { label: 'Normal', ms: 700 },
+  { label: 'Fast', ms: 300 },
+  { label: 'Blazing', ms: 100 },
+];
+
 // Main App component wrapper that provides game context
 function App() {
   return (
@@ -45,9 +52,13 @@ const AppContent = React.memo(() => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [hasStateError, setHasStateError] = useState<boolean>(false);
-  
+
   // Define isCPUThinking state first to avoid the variable used before declaration error
   const [localIsCPUThinking, setLocalIsCPUThinking] = useState<boolean>(false);
+
+  // Spectator controls for CPU vs CPU mode
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [moveSpeedMs, setMoveSpeedMs] = useState<number>(700);
   
   // Apply browser compatibility fixes and start performance monitoring on component mount
   useEffect(() => {
@@ -138,6 +149,11 @@ const AppContent = React.memo(() => {
         return;
       }
       
+      // Block all human input during CPU vs CPU spectator mode
+      if (gameState.playerMode === PlayerMode.CPU_VS_CPU) {
+        return;
+      }
+
       // Check if player input should be blocked
       if (shouldBlockPlayerInput(gameState, localIsCPUThinking)) {
         if (gameState.gamePhase !== GamePhase.PLAYING) {
@@ -181,7 +197,7 @@ const AppContent = React.memo(() => {
   const handleCellClick = useThrottle(handleCellClickBase, 300);
   
   // Use the CPU move hook to handle AI turns
-  const { isCPUThinking } = useCPUMove(gameState, handleCPUMove);
+  const { isCPUThinking } = useCPUMove(gameState, handleCPUMove, isPaused, moveSpeedMs);
   
   // Sync the CPU thinking state with our local state
   useEffect(() => {
@@ -207,6 +223,7 @@ const AppContent = React.memo(() => {
   // Handle game phase transitions
   useEffect(() => {
     if (gameState.gamePhase === GamePhase.PLAYING) {
+      setIsPaused(false); // always start unpaused
       playStart();
       setIsLoading(true);
       const timer = setTimeout(() => {
@@ -381,7 +398,33 @@ const AppContent = React.memo(() => {
           <div id="game-grid" className="App-game" ref={gameGridRef} tabIndex={-1}>
             {/* CPU thinking indicator */}
             <CPUThinking isThinking={isCPUThinking} />
-            
+
+            {/* Spectator controls - only visible in CPU vs CPU mode */}
+            {gameState.playerMode === PlayerMode.CPU_VS_CPU && (
+              <div className="App-spectator-controls" role="region" aria-label="Spectator controls">
+                <button
+                  className={`App-spectator-btn ${isPaused ? 'App-spectator-btn--resume' : 'App-spectator-btn--pause'}`}
+                  onClick={() => setIsPaused(p => !p)}
+                  aria-pressed={isPaused}
+                >
+                  {isPaused ? '▶ Resume' : '⏸ Pause'}
+                </button>
+                <div className="App-spectator-speed" role="group" aria-label="Game speed">
+                  <span className="App-spectator-speed__label">Speed:</span>
+                  {SPEED_OPTIONS.map(({ label, ms }) => (
+                    <button
+                      key={ms}
+                      className={`App-spectator-speed__btn ${moveSpeedMs === ms ? 'App-spectator-speed__btn--active' : ''}`}
+                      onClick={() => setMoveSpeedMs(ms)}
+                      aria-pressed={moveSpeedMs === ms}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Master grid */}
             <MasterGrid 
               cells={gameState.cells}
