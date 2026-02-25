@@ -18,8 +18,12 @@ export const useCPUMove = (
   moveSpeedMs: number = 700
 ): { isCPUThinking: boolean } => {
   const [isCPUThinking, setIsCPUThinking] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const pendingMoveRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Store latest gameState in a ref so the callback always has fresh data
+  const gameStateRef = useRef(gameState);
+  gameStateRef.current = gameState;
 
   // Determine if it's a CPU's turn
   const isHumanVsCPUTurn =
@@ -32,26 +36,37 @@ export const useCPUMove = (
   const isGamePlaying = gameState.gamePhase === GamePhase.PLAYING;
   const noWinner = !gameState.gameWinner;
 
-  const shouldMakeMove = isCPUTurn && isGamePlaying && noWinner && !isPaused && !isProcessing;
-
   const executeCPUMove = useCallback(async () => {
+    const currentState = gameStateRef.current;
+
+    // Double-check conditions before executing
+    if (currentState.gamePhase !== GamePhase.PLAYING || currentState.gameWinner) {
+      pendingMoveRef.current = false;
+      return;
+    }
+
     setIsCPUThinking(true);
 
     try {
       // In CPU_VS_CPU mode, X uses cpuDifficultyX; O always uses cpuDifficulty
       const stateForAI =
-        gameState.playerMode === PlayerMode.CPU_VS_CPU && gameState.currentPlayer === Player.X
-          ? { ...gameState, cpuDifficulty: gameState.cpuDifficultyX }
-          : gameState;
+        currentState.playerMode === PlayerMode.CPU_VS_CPU && currentState.currentPlayer === Player.X
+          ? { ...currentState, cpuDifficulty: currentState.cpuDifficultyX }
+          : currentState;
 
       const moveIndex = await makeCPUMove(stateForAI);
 
-      if (validateCPUMove(moveIndex, gameState)) {
+      // Re-check state hasn't changed (game might have been reset)
+      if (gameStateRef.current.gamePhase !== GamePhase.PLAYING) {
+        return;
+      }
+
+      if (validateCPUMove(moveIndex, gameStateRef.current)) {
         makeMove(moveIndex);
       } else {
         console.error('Invalid CPU move detected:', moveIndex);
         const fallbackMove = await makeCPUMove({
-          ...gameState,
+          ...gameStateRef.current,
           cpuDifficulty: CPUDifficulty.EASY
         });
         makeMove(fallbackMove);
@@ -60,21 +75,27 @@ export const useCPUMove = (
       console.error('CPU move error:', error);
     } finally {
       setIsCPUThinking(false);
-      setIsProcessing(false);
+      pendingMoveRef.current = false;
     }
-  }, [gameState, makeMove]);
+  }, [makeMove]);
 
   useEffect(() => {
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    // Clear timeout if paused or game ended
+    if (isPaused || !isGamePlaying || gameState.gameWinner) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      pendingMoveRef.current = false;
+      return;
     }
 
-    if (shouldMakeMove) {
-      setIsProcessing(true);
+    // Schedule a CPU move if it's CPU's turn and we don't have a pending move
+    if (isCPUTurn && noWinner && !pendingMoveRef.current) {
+      pendingMoveRef.current = true;
 
       timeoutRef.current = setTimeout(() => {
+        timeoutRef.current = null;
         executeCPUMove();
       }, moveSpeedMs);
     }
@@ -85,7 +106,15 @@ export const useCPUMove = (
         timeoutRef.current = null;
       }
     };
-  }, [shouldMakeMove, moveSpeedMs, executeCPUMove]);
+  }, [
+    isCPUTurn,
+    isGamePlaying,
+    noWinner,
+    isPaused,
+    moveSpeedMs,
+    executeCPUMove,
+    gameState.currentPlayer, // Re-run when player changes (after a move)
+  ]);
 
   return { isCPUThinking };
 };
