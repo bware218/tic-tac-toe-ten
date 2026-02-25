@@ -80,8 +80,19 @@ export const useCPUMove = (
   }, [makeMove]);
 
   useEffect(() => {
+    console.log('[useCPUMove] Effect running:', {
+      isCPUTurn,
+      isGamePlaying,
+      noWinner,
+      isPaused,
+      pendingMove: pendingMoveRef.current,
+      currentPlayer: gameState.currentPlayer,
+      gamePhase: gameState.gamePhase,
+    });
+
     // Clear timeout if paused or game ended
     if (isPaused || !isGamePlaying || gameState.gameWinner) {
+      console.log('[useCPUMove] Early return - paused/not playing/has winner');
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -92,12 +103,16 @@ export const useCPUMove = (
 
     // Schedule a CPU move if it's CPU's turn and we don't have a pending move
     if (isCPUTurn && noWinner && !pendingMoveRef.current) {
+      console.log('[useCPUMove] Scheduling CPU move in', moveSpeedMs, 'ms');
       pendingMoveRef.current = true;
 
       timeoutRef.current = setTimeout(() => {
+        console.log('[useCPUMove] Timeout fired, executing move');
         timeoutRef.current = null;
         executeCPUMove();
       }, moveSpeedMs);
+    } else {
+      console.log('[useCPUMove] Not scheduling:', { isCPUTurn, noWinner, pending: pendingMoveRef.current });
     }
 
     return () => {
