@@ -104,6 +104,7 @@ export const useCPUMove = (
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
+        pendingMoveRef.current = false; // Reset so next effect run can schedule
       }
     };
   }, [
