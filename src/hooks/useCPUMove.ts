@@ -5,11 +5,6 @@ import { makeCPUMove, validateCPUMove } from '../utils/cpuAI';
 /**
  * Custom hook to handle CPU moves in the game.
  * Supports HUMAN_VS_CPU (O is CPU) and CPU_VS_CPU (both players are CPU).
- *
- * @param gameState   - Current game state
- * @param makeMove    - Function to execute a move
- * @param isPaused    - When true, CPU moves are suspended (spectator pause)
- * @param moveSpeedMs - Delay between turns in ms (default 700)
  */
 export const useCPUMove = (
   gameState: GameState,
@@ -18,30 +13,26 @@ export const useCPUMove = (
   moveSpeedMs: number = 700
 ): { isCPUThinking: boolean } => {
   const [isCPUThinking, setIsCPUThinking] = useState(false);
-  const pendingMoveRef = useRef(false);
+
+  // Use a counter to trigger effect re-runs after each move completes
+  const [moveCount, setMoveCount] = useState(0);
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isExecutingRef = useRef(false);
 
   // Store latest gameState in a ref so the callback always has fresh data
   const gameStateRef = useRef(gameState);
   gameStateRef.current = gameState;
 
-  // Determine if it's a CPU's turn
-  const isHumanVsCPUTurn =
-    gameState.playerMode === PlayerMode.HUMAN_VS_CPU &&
-    gameState.currentPlayer === Player.O;
-
-  const isCPUVsCPUTurn = gameState.playerMode === PlayerMode.CPU_VS_CPU;
-
-  const isCPUTurn = isHumanVsCPUTurn || isCPUVsCPUTurn;
-  const isGamePlaying = gameState.gamePhase === GamePhase.PLAYING;
-  const noWinner = !gameState.gameWinner;
-
   const executeCPUMove = useCallback(async () => {
+    if (isExecutingRef.current) return;
+    isExecutingRef.current = true;
+
     const currentState = gameStateRef.current;
 
     // Double-check conditions before executing
     if (currentState.gamePhase !== GamePhase.PLAYING || currentState.gameWinner) {
-      pendingMoveRef.current = false;
+      isExecutingRef.current = false;
       return;
     }
 
@@ -75,61 +66,58 @@ export const useCPUMove = (
       console.error('CPU move error:', error);
     } finally {
       setIsCPUThinking(false);
-      pendingMoveRef.current = false;
+      isExecutingRef.current = false;
+      // Increment counter to trigger effect re-run for next move
+      setMoveCount(c => c + 1);
     }
   }, [makeMove]);
 
   useEffect(() => {
-    console.log('[useCPUMove] Effect running:', {
-      isCPUTurn,
-      isGamePlaying,
-      noWinner,
-      isPaused,
-      pendingMove: pendingMoveRef.current,
-      currentPlayer: gameState.currentPlayer,
-      gamePhase: gameState.gamePhase,
-    });
+    // Determine if it's a CPU's turn
+    const isHumanVsCPUTurn =
+      gameState.playerMode === PlayerMode.HUMAN_VS_CPU &&
+      gameState.currentPlayer === Player.O;
 
-    // Clear timeout if paused or game ended
-    if (isPaused || !isGamePlaying || gameState.gameWinner) {
-      console.log('[useCPUMove] Early return - paused/not playing/has winner');
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      pendingMoveRef.current = false;
+    const isCPUVsCPUTurn = gameState.playerMode === PlayerMode.CPU_VS_CPU;
+
+    const isCPUTurn = isHumanVsCPUTurn || isCPUVsCPUTurn;
+    const isGamePlaying = gameState.gamePhase === GamePhase.PLAYING;
+    const noWinner = !gameState.gameWinner;
+
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    // Don't schedule if paused, game ended, or already executing
+    if (isPaused || !isGamePlaying || !noWinner || isExecutingRef.current) {
       return;
     }
 
-    // Schedule a CPU move if it's CPU's turn and we don't have a pending move
-    if (isCPUTurn && noWinner && !pendingMoveRef.current) {
-      console.log('[useCPUMove] Scheduling CPU move in', moveSpeedMs, 'ms');
-      pendingMoveRef.current = true;
-
+    // Schedule a CPU move if it's CPU's turn
+    if (isCPUTurn) {
       timeoutRef.current = setTimeout(() => {
-        console.log('[useCPUMove] Timeout fired, executing move');
         timeoutRef.current = null;
         executeCPUMove();
       }, moveSpeedMs);
-    } else {
-      console.log('[useCPUMove] Not scheduling:', { isCPUTurn, noWinner, pending: pendingMoveRef.current });
     }
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
-        pendingMoveRef.current = false; // Reset so next effect run can schedule
       }
     };
   }, [
-    isCPUTurn,
-    isGamePlaying,
-    noWinner,
+    gameState.playerMode,
+    gameState.currentPlayer,
+    gameState.gamePhase,
+    gameState.gameWinner,
     isPaused,
     moveSpeedMs,
+    moveCount, // Re-run after each move completes
     executeCPUMove,
-    gameState.currentPlayer, // Re-run when player changes (after a move)
   ]);
 
   return { isCPUThinking };
