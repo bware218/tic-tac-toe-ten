@@ -25,7 +25,8 @@ export enum GameMode {
  */
 export enum PlayerMode {
   HUMAN_VS_HUMAN = 'human-vs-human',
-  HUMAN_VS_CPU = 'human-vs-cpu'
+  HUMAN_VS_CPU = 'human-vs-cpu',
+  CPU_VS_CPU = 'cpu-vs-cpu'
 }
 
 /**
@@ -53,7 +54,7 @@ export enum CPUDifficulty {
 export type PlayerType = Player.X | Player.O;
 export type CellValue = PlayerType | null;
 export type GameModeType = GameMode.BASIC | GameMode.EXTENDED;
-export type PlayerModeType = PlayerMode.HUMAN_VS_HUMAN | PlayerMode.HUMAN_VS_CPU;
+export type PlayerModeType = PlayerMode.HUMAN_VS_HUMAN | PlayerMode.HUMAN_VS_CPU | PlayerMode.CPU_VS_CPU;
 export type GamePhaseType = GamePhase.SETUP | GamePhase.PLAYING | GamePhase.FINISHED;
 export type CPUDifficultyType = CPUDifficulty.EASY | CPUDifficulty.MEDIUM | CPUDifficulty.HARD | CPUDifficulty.EXPERT;
 
@@ -94,8 +95,9 @@ export interface GridState {
 export interface GameState {
   // Game configuration
   mode: GameMode;           // Basic or extended mode
-  playerMode: PlayerMode;   // Human vs human or human vs CPU
-  cpuDifficulty: CPUDifficulty; // Difficulty level for CPU opponent
+  playerMode: PlayerMode;   // Human vs human, human vs CPU, or CPU vs CPU
+  cpuDifficulty: CPUDifficulty; // Difficulty for O (or CPU opponent in human vs CPU)
+  cpuDifficultyX: CPUDifficulty; // Difficulty for X in CPU vs CPU mode
   
   // Current game state
   currentPlayer: Player;    // Whose turn it is (X or O)
@@ -146,6 +148,7 @@ export type GameAction =
   | { type: 'SET_GAME_MODE'; payload: GameMode }
   | { type: 'SET_PLAYER_MODE'; payload: PlayerMode }
   | { type: 'SET_CPU_DIFFICULTY'; payload: CPUDifficulty }
+  | { type: 'SET_CPU_DIFFICULTY_X'; payload: CPUDifficulty }
   | { type: 'UPDATE_WINNING_STATE'; payload: { 
       smallGridWinners: (Player | null)[]; 
       gameWinner: Player | null;
