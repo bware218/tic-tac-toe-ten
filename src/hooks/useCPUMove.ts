@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { GameState, Player, PlayerMode, GamePhase, CPUDifficulty } from '../types';
 import { makeCPUMove, validateCPUMove } from '../utils/cpuAI';
-import { useDeepCallback } from '../utils/performanceUtils';
 
 /**
  * Custom hook to handle CPU moves in the game.
@@ -19,9 +18,23 @@ export const useCPUMove = (
   moveSpeedMs: number = 700
 ): { isCPUThinking: boolean } => {
   const [isCPUThinking, setIsCPUThinking] = useState(false);
-  const isProcessingRef = useRef(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const executeCPUMove = useDeepCallback(async () => {
+  // Determine if it's a CPU's turn
+  const isHumanVsCPUTurn =
+    gameState.playerMode === PlayerMode.HUMAN_VS_CPU &&
+    gameState.currentPlayer === Player.O;
+
+  const isCPUVsCPUTurn = gameState.playerMode === PlayerMode.CPU_VS_CPU;
+
+  const isCPUTurn = isHumanVsCPUTurn || isCPUVsCPUTurn;
+  const isGamePlaying = gameState.gamePhase === GamePhase.PLAYING;
+  const noWinner = !gameState.gameWinner;
+
+  const shouldMakeMove = isCPUTurn && isGamePlaying && noWinner && !isPaused && !isProcessing;
+
+  const executeCPUMove = useCallback(async () => {
     setIsCPUThinking(true);
 
     try {
@@ -47,41 +60,32 @@ export const useCPUMove = (
       console.error('CPU move error:', error);
     } finally {
       setIsCPUThinking(false);
-      isProcessingRef.current = false;
+      setIsProcessing(false);
     }
   }, [gameState, makeMove]);
 
   useEffect(() => {
-    // HUMAN_VS_CPU: only O is a CPU
-    const isHumanVsCPUTurn =
-      gameState.playerMode === PlayerMode.HUMAN_VS_CPU &&
-      gameState.currentPlayer === Player.O;
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
 
-    // CPU_VS_CPU: both X and O are CPUs
-    const isCPUVsCPUTurn = gameState.playerMode === PlayerMode.CPU_VS_CPU;
+    if (shouldMakeMove) {
+      setIsProcessing(true);
 
-    const isCPUTurn = isHumanVsCPUTurn || isCPUVsCPUTurn;
-    const isGamePlaying = gameState.gamePhase === GamePhase.PLAYING;
-    const noWinner = !gameState.gameWinner;
-
-    if (isCPUTurn && isGamePlaying && noWinner && !isPaused && !isProcessingRef.current) {
-      isProcessingRef.current = true;
-
-      const delay = setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         executeCPUMove();
       }, moveSpeedMs);
-
-      return () => clearTimeout(delay);
     }
-  }, [
-    gameState.playerMode,
-    gameState.currentPlayer,
-    gameState.gamePhase,
-    gameState.gameWinner,
-    isPaused,
-    moveSpeedMs,
-    executeCPUMove,
-  ]);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [shouldMakeMove, moveSpeedMs, executeCPUMove]);
 
   return { isCPUThinking };
 };
