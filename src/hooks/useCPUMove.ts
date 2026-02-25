@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { GameState, Player, PlayerMode, GamePhase, CPUDifficulty } from '../types';
 import { makeCPUMove, validateCPUMove } from '../utils/cpuAI';
-import { useDeepCallback } from '../utils/performanceUtils';
 
 /**
  * Custom hook to handle CPU moves in the game.
@@ -21,7 +20,7 @@ export const useCPUMove = (
   const [isCPUThinking, setIsCPUThinking] = useState(false);
   const isProcessingRef = useRef(false);
 
-  const executeCPUMove = useDeepCallback(async () => {
+  const executeCPUMove = useCallback(async () => {
     setIsCPUThinking(true);
 
     try {
